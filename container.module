@@ -1,0 +1,106 @@
+<?php
+
+/**
+ * @file
+ * Implement of Drupal Container
+ */
+require_once dirname(__FILE__) . "/lib/Drupal.php";
+/**
+ * Implements hook_theme().
+ */
+function container_theme() {
+  $return = array();
+
+  $return['container_template'] = array(
+    'variables' => array(
+      'template' => NULL,
+      'template_id' => NULL,
+      'data'     => array()
+    ),
+  );
+
+  return $return;
+}
+
+/**
+ * Implement fo drupal_container_render_template.
+ *
+ * @param $vars
+ *
+ * @return string
+ *  Rendered template.
+ */
+function theme_container_template($vars) {
+  if (is_file($vars['template'])) {
+    return theme_render_template($vars['template'], $vars);
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function container_ctools_plugin_directory($owner, $plugin_type) {
+  switch ("$owner:$plugin_type") {
+    case 'ctools:content_types':
+      return "plugins/$plugin_type";
+  }
+
+  return NULL;
+}
+
+/*
+ * Get real path with token supported.
+ */
+function container_realpath($file, $template_file = '') {
+  $file = trim($file);
+
+  if (strpos($file, '{') === FALSE) {
+    return $file;
+  }
+
+  if (strpos($file, '{fft}') !== FALSE) {
+    $theme_path = dirname($template_file);
+    $file = str_replace('{fft}', $theme_path, $file);
+    return $file;
+  }
+
+  if (strpos($file, '{theme}') !== FALSE) {
+    $theme_default = $GLOBALS['conf']['theme_default'];
+    $theme_path = drupal_get_path('theme', $theme_default);
+    $file = str_replace('{theme}', $theme_path, $file);
+    return $file;
+  }
+
+  $matches = array();
+  $types = array('module', 'theme', 'library');
+
+  foreach ($types as $type) {
+    $pattern = '/\{' . $type . '-(.+)\}/';
+
+    preg_match($pattern, $file, $matches);
+
+    if ($type == "library") {
+      if (count($matches) > 1 && ($path = libraries_get_path($matches[1])) != '') {
+        $file = str_replace($matches[0], $path, $file);
+        return $file;
+      }
+    }
+    else {
+      if (count($matches) > 1 && ($path = drupal_get_path($type, $matches[1])) != '') {
+        $file = str_replace($matches[0], $path, $file);
+        return $file;
+      }
+    }
+  }
+
+  return $file;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function container_views_api() {
+  return array(
+    'api'           => 3
+  );
+}

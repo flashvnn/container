@@ -1,0 +1,9 @@
+name = Drupal Container
+description = Drupal 8 like Drupal Container class
+core = 7.x
+version = 7.x-1.x
+
+;files[] =
+;dependencies[] = 
+
+files[] = plugins/zm_template/views_zm_template_plugin_style.inc
